@@ -14,17 +14,7 @@ In countries that have non-universal health insurance systems, some citizens may
 In countries with universal government-funded health systems, healthcare is available to all citizens, no matter what. Countries that fall under this category are Australia, Bahrain, Bhutan, Botswana, Brazil, Brunei, Canada, Cuba, Denmark, Finland, Georgia, Greece, Iceland, Ireland, Italy, Kuwait, Malta, New Zealand, North Korea, Norway, Oman, Portugal, San Marino, Saudi Arabia, South Africa, Spain, Sri Lanka, Sweden, Taiwan, Trinidad and Tobago, and the United Kingdom. n = 31.
 
 ## Datasets used
-library(readr)
-
-```
-WHO_global <- read_csv("GitHub/COVID-19/raw_data/WHO-COVID-19-global-data.csv", 
-                                      col_types = cols(Country_code = col_skip(), 
-                                                       WHO_region = col_skip(), New_cases = col_skip(), 
-                                                       New_deaths = col_skip()))
-```
-
-View(WHO_global)
-
+My main dataset will be the World Health Organizaion's international dataset, which includes number of cases and deaths reported both daily and cumulatively, by country. This dataset can be found at https://covid19.who.int/.
 
 ## Description of analyses
 

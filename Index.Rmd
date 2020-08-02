@@ -7,11 +7,24 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(kableExtra)
+library(readr)
+library(lattice)
 ```
 
 # COVID-19 Research Project
 ### BIOL 390: Reproducable Research, Summer 2020
 **Copyright (2020) Monica Pittiglio**
+```{r, include = FALSE}
+Global <- read_csv("~/GitHub/COVID-19/raw_data/WHO-COVID-19-global-data.csv")
+
+NonUniversal <- Global %>%
+  filter(Country %in% c("Bangladesh", "Burundi", "Congo", "Ethiopia", "Jordan", "Kenya", "Nigeria", "Paraguay", "United Arab Emirates", "Tanzania", "Uganda", "United States of America"))
+
+Universal <- Global %>%
+  filter(Country %in% c("Australia", "Bahrain", "Bhutan", "Botswana", "Brazil", "Brunei", "Canada", "Cuba", "Denmark", "Finland", "Georgia", "Greece", "Iceland", "Ireland", "Italy", "Kuwait", "Malta", "New Zealand", "North Korea", "Norway", "Oman", "Portugal", "San Marino", "Saudi Arabia", "South Africa", "Spain", "Sri Lanka", "Sweden", "Taiwan", "Trinidad and Tobago", "United Kingdom"))
+```
 
 ## Abstract (tl;dr)
 
@@ -26,7 +39,17 @@ In countries that have non-universal health insurance systems, some citizens may
 In countries with universal government-funded health systems, healthcare is available to all citizens, no matter what. Countries that fall under this category are Australia, Bahrain, Bhutan, Botswana, Brazil, Brunei, Canada, Cuba, Denmark, Finland, Georgia, Greece, Iceland, Ireland, Italy, Kuwait, Malta, New Zealand, North Korea, Norway, Oman, Portugal, San Marino, Saudi Arabia, South Africa, Spain, Sri Lanka, Sweden, Taiwan, Trinidad and Tobago, and the United Kingdom. n = 31.
 
 ## Datasets used
-My main dataset will be the World Health Organizaion's international dataset, which includes number of cases and deaths reported both daily and cumulatively, by country. This dataset is updated daily and can be found at https://covid19.who.int/.
+My main dataset is the World Health Organizaion's international dataset, which includes number of cases and deaths reported both daily and cumulatively, by country. This dataset is updated daily and can be found at https://covid19.who.int/.
+
+```{r, echo = FALSE}
+ggplot(NonUniversal, aes(x = Date_reported, y = Cumulative_cases)) +
+  geom_line() +
+  facet_wrap(~ Country)
+
+ggplot(Universal, aes(x = Date_reported, y = Cumulative_cases)) +
+  geom_line() +
+  facet_wrap(~ Country)
+```
 
 ## Description of analyses
 

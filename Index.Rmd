@@ -1,7 +1,7 @@
 ---
 title: "Index"
 author: "Monica Pittiglio"
-date: "7/22/2020"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
 output: html_document
 ---
 
@@ -14,20 +14,43 @@ library(lattice)
 library(ggplot2)
 library(grid)
 library(directlabels)
+library(tidyquant)
+library(dplyr)
 ```
 
 # COVID-19 Research Project
 ### BIOL 390: Reproducable Research, Summer 2020
 **Copyright (2020) Monica Pittiglio**
+
 ```{r, include = FALSE}
-Global <- read_csv("~/GitHub/COVID-19/raw_data/WHO-COVID-19-global-data.csv")
+# Load of all coronavirus datasets, dataframes.
+Global <- read_csv("~/GitHub/COVID-19/raw_data/WHO-COVID-19-global-data (1).csv")
+
 NonUniversal <- Global %>%
-  filter(Country %in% c("Bangladesh", "Burundi", "Congo", "Ethiopia", "Jordan", "Kenya", "Nigeria", "Paraguay", "United Arab Emirates", "United Republic of Tanzania", "Uganda", "United States of America")) %>%
-arrange(desc(Cumulative_deaths))
+  filter(Country %in% c("Bangladesh", "Burundi", "Congo", "Ethiopia", "Jordan", "Kenya", "Nigeria", "Paraguay", "United Arab Emirates", "United Republic of Tanzania", "Uganda", "United States of America"))
+
 Universal <- Global %>%
-  filter(Country %in% c("Australia", "Bahrain", "Bhutan", "Botswana", "Brazil", "Brunei Darussalam", "Canada", "Cuba", "Denmark", "Finland", "Georgia", "Greece", "Iceland", "Ireland", "Italy", "Kuwait", "Malta", "New Zealand", "Norway", "Oman", "Portugal", "San Marino", "Saudi Arabia", "South Africa", "Spain", "Sri Lanka", "Sweden", "Taiwan", "Trinidad and Tobago", "The United Kingdom"))
-LastDayNonUniversal <- filter(NonUniversal, Date_reported == "2020-07-15")
-LastDayUniversal <- filter(Universal, Date_reported == "2020-07-15")
+  filter(Country %in% c("Australia", "Bahrain", "Bhutan", "Botswana", "Brazil", "Brunei Darussalam", "Canada", "Cuba", "Denmark", "Finland", "Georgia", "Greece", "Iceland", "Ireland", "Italy", "Kuwait", "Malta", "New Zealand", "Norway", "Oman", "Portugal", "San Marino", "Saudi Arabia", "South Africa", "Spain", "Sri Lanka", "Sweden", "Trinidad and Tobago", "The United Kingdom"))
+
+LastDayGlobal <- filter(Global, Date_reported == "2020-08-02")
+sum(LastDayGlobal$Cumulative_deaths)
+
+LastDayNonUniversal <- filter(NonUniversal, Date_reported == "2020-08-02")
+sum(LastDayNonUniversal$Cumulative_deaths)
+
+LastDayUniversal <- filter(Universal, Date_reported == "2020-08-02")
+sum(LastDayUniversal$Cumulative_deaths)
+```
+
+```{r, include = FALSE}
+# Load population data
+Population <- read_csv("~/GitHub/COVID-19/output/Population.csv")
+
+NonUniversalPop <- Population %>%
+  filter(Country_name %in% c("Bangladesh", "Burundi", "Congo", "Ethiopia", "Jordan", "Kenya", "Nigeria", "Paraguay", "United Arab Emirates", "United Republic of Tanzania", "Uganda", "United States of America"))
+
+UniversalPop <- Population %>%
+  filter(Country_name %in% c("Australia", "Bahrain", "Bhutan", "Botswana", "Brazil", "Brunei Darussalam", "Canada", "Cuba", "Denmark", "Finland", "Georgia", "Greece", "Iceland", "Ireland", "Italy", "Kuwait", "Malta", "New Zealand", "Norway", "Oman", "Portugal", "San Marino", "Saudi Arabia", "South Africa", "Spain", "Sri Lanka", "Sweden", "Trinidad and Tobago", "The United Kingdom"))
 ```
 
 ## Abstract (tl;dr)
@@ -43,28 +66,132 @@ In countries that have non-universal health insurance systems, some citizens may
 In countries with universal government-funded health systems, healthcare is available to all citizens, no matter what. Countries that fall under this category are Australia, Bahrain, Bhutan, Botswana, Brazil, Brunei, Canada, Cuba, Denmark, Finland, Georgia, Greece, Iceland, Ireland, Italy, Kuwait, Malta, New Zealand, Norway, Oman, Portugal, San Marino, Saudi Arabia, South Africa, Spain, Sri Lanka, Sweden, Trinidad and Tobago, and the United Kingdom. Taiwan and North Korea also fall into this category but will be left out of this report, as they have not released their coronavirus data. n = 29.
 
 ## Datasets used
-My main dataset is the World Health Organizaion's international dataset, which includes number of cases and deaths reported both daily and cumulatively, by country. This dataset is updated daily and can be found at https://covid19.who.int/.
+My main dataset is the World Health Organization's international dataset, which includes number of cases and deaths reported both daily and cumulatively, by country. This dataset is updated daily and can be found at https://covid19.who.int/. Data collection began in mid-January and this report includes data through August 2nd, 2020.
 
-First, we'll examine the cumulative deaths per country, grouped by type of healtcare.
+First, we'll examine the cumulative deaths per country, grouped by healthcare type. Keep in mind that the Y axis of the following two graphs are on log scales, making the outliers appear less distinguished but the rest of the data more differentiable.
 
-```{r, echo = FALSE}
+```{r, fig.align = "center", fig.height = 9, echo = FALSE}
+# Line graph of total deaths by country, non-universal healthcare.
+# I made this graph abnormally tall so that it wasn't too squished!!!
 ggplot(NonUniversal, aes(x = Date_reported, y = Cumulative_deaths, color = Country)) +
   geom_line() +
   scale_y_log10() +
-   ggtitle("Cumulative Deaths in Countries with Non-Universal Healthcare") +
+   ggtitle("Figure 1: Cumulative Deaths Over Time in Countries with Non-Universal Healthcare") +
   labs(x = "Month", y = "Cumulative Deaths") +
   geom_dl(aes(label = Country), method = list(dl.combine("last.points")), cex = 0.8) +
-  coord_cartesian(expand = 2020-08-01, clip = "off") +
-  theme(legend.position = "none")
-ggplot(Universal, aes(x = Date_reported, y = Cumulative_deaths, color = Country)) +
-  geom_line() +
-  scale_y_log10() +
-  ggtitle("Cumulative Deaths in Countries with Universal Healthcare") +
-  labs(x = "Month", y = "Cumulative Deaths") +
-  geom_dl(aes(label = Country), method = list(dl.combine("last.points")), cex = 0.8) +
-  coord_cartesian(expand = 2020-08-01, clip = "off") +
+  coord_x_date(xlim = c("2020-01-15", "2020-11-01")) +
   theme(legend.position = "none")
 ```
 
+```{r, echo = FALSE}
+# Table of statistics for deaths, non-universal healthcare. Compliments above plot.
+knitr::kable(LastDayNonUniversal %>% summarize(N = n(), 
+              Sum = sum(Cumulative_deaths),
+			 			  Mean = mean(Cumulative_deaths), 
+			 			  Median = median(Cumulative_deaths), 
+			 			  StdDev = sd(Cumulative_deaths)), 
+			 align = c('l','c','c','c','c'), 
+			 digits = 2,
+			 format = "html", 
+			 caption = "**Table 1**: Summary of Deaths in Countries with Non-Universal Healthcare",
+			 table.attr = "style='width:70%;'") %>% kable_styling(position = "center")
+```
 
+The total number of deaths as of August 2nd in countries with non-universal healthcare is 157,786. The United States of America leads the pack with a cumulative 152,630 deaths. This is followed by Bangladesh, which has a cumulative 3,154 deaths, and Nigeria, which has a cumulative 883 deaths. These top three countries account for 99% of the deaths in countries that have non-universal healthcare. The United States of America alone comprises 97% of the total.
 
+```{r, fig.align = "center", fig.height = 12, echo = FALSE}
+# Line graph of total deaths by country, universal healthcare.
+# I made this graph abnormally tall so that it wasn't too squished!!!
+ggplot(Universal, aes(x = Date_reported, y = Cumulative_deaths, color = Country)) +
+  geom_line() +
+  scale_y_log10() +
+  ggtitle("Figure 2: Cumulative Deaths Over Time in Countries with Universal Healthcare") +
+  labs(x = "Month", y = "Cumulative Deaths") +
+  geom_dl(aes(label = Country), method = list(dl.combine("last.points")), cex = 0.8) +
+  coord_x_date(xlim = c("2020-01-15", "2020-10-01")) +
+  theme(legend.position = "none")
+```
+
+```{r, echo = FALSE}
+# Table of statistics for deaths, universal healthcare. Compliments above plot.
+knitr::kable(LastDayUniversal %>% summarize(N = n(),
+              Sum = sum(Cumulative_deaths),
+			 			  Mean = mean(Cumulative_deaths), 
+			 			  Median = median(Cumulative_deaths), 
+			 			  StdDev = sd(Cumulative_deaths)), 
+			 align = c('l','c','c','c','c'), 
+			 digits = 2,
+			 format = "html", 
+			 caption = "**Table 2**: Summary of Deaths in Countries with Universal Healthcare",
+			 table.attr = "style='width:70%;'") %>% kable_styling(position = "center")
+```
+
+The total number of deaths as of August 2nd in countries with non-universal healthcare is 234,315. Brazil leads the pack with a cumulative 92,475 deaths. This is followed by the United Kingdom, which has a cumulative 46,193 deaths, and Italy, which has a cumulative 35,146 deaths. These top three countries account for 74% of the deaths in countries that have non-universal healthcare.
+
+Even a brief glance will tell you that the dataset with more countries, and consequently more people, has more deaths. In order to compare the universal and nonuniversal datasets, we have to divide the number of deaths by total population to get deaths per capita. The population dataset I used is from worldbank.org. Key sorces for this dataset are listed as the United Nations, various census reports, and Eurostat, among other reputable sources. This dataset can be found at https://data.worldbank.org/indicator/SP.POP.TOTL. It was last updated in 2019, but includes data as far back as 1960.
+
+```{r, fig.align = "center", fig.width = 14, echo = FALSE}
+# Dot plots with lines of 2019 population, by country.
+ggplot(NonUniversalPop, aes(x = Year_2019, y = Country_name)) +
+  geom_point(size = 4) +
+  geom_segment(aes(xend = 0, yend = Country_name), size = 2) +
+  ggtitle("Figure 3: Total population in Countries with Non-Universal Healthcare") +
+  labs(x = "Population", y = "Country")
+
+ggplot(UniversalPop, aes(x = Year_2019, y = Country_name)) +
+  geom_point(size = 4) +
+  geom_segment(aes(xend = 0, yend = Country_name), size = 2) +
+  ggtitle("Figure 4: Total population in Countries with Non-Universal Healthcare") +
+  labs(x = "Population", y = "Country")
+```
+
+Notably, the United States of America comprises 97% of the total deaths in countries with non-universal healthcare, and 22% of the total global deaths despite comprising only 4% of the global population.
+
+## Description of analyses
+
+## Conclusions
+
+## Viewing this project
+The completed project files can be accessed online at file:///C:/Users/Owner/Documents/GitHub/COVID-19/README.html. The repo for this reproducible project is also publicly available at https://github.com/MonicaPittiglio/COVID-19.
+
+```{r, fig.align = "center", fig.width = 10, fig.height = 7, echo = FALSE}
+# Next 4 are graphs for every country, both cases and deaths.
+ggplot() +
+  geom_line(data = NonUniversal, aes(x = Date_reported, y = Cumulative_cases, color = "Cases")) +
+  geom_line(data = NonUniversal, aes(x = Date_reported, y = Cumulative_deaths, color = "Deaths")) +
+  facet_wrap(~ Country) +
+  ggtitle("Cumulative Cases and Deaths in Countries with Non-Universal Healthcare") +
+  labs(x = "Month", y = "Cumulative Cases") +
+  scale_y_log10()
+
+ggplot() +
+  geom_line(data = Universal, aes(x = Date_reported, y = Cumulative_cases, color = "Cases")) +
+  geom_line(data = Universal, aes(x = Date_reported, y = Cumulative_deaths, color = "Deaths")) +
+  facet_wrap(~ Country) +
+  ggtitle("Cumulative Cases and Deaths in Countries with Non-Universal Healthcare") +
+  labs(x = "Month", y = "Cumulative Cases") +
+  scale_y_log10()
+```
+
+```{r, echo = FALSE}
+# Dot plots with lines of the most recent death data, by country.
+ggplot(LastDayNonUniversal, aes(x = Cumulative_deaths, y = Country)) +
+  geom_point(size = 4) +
+  geom_segment(aes(xend = 0, yend = Country), size = 2) +
+  scale_x_log10()
+
+ggplot(LastDayUniversal, aes(x = Cumulative_deaths, y = Country)) +
+  geom_point(size = 4) +
+  geom_segment(aes(xend = 0, yend = Country), size = 2) +
+  scale_x_log10()
+```
+
+```{r, echo = FALSE, fig.cap = "Cumulative Deaths in Countries with Non-Universal Healthcare"}
+# ANOVA table to compliment Figure 1.
+knitr::kable(anova(lm(Cumulative_deaths ~ Country, data = NonUniversal)),digits = 3)
+```
+
+```{r anova, echo = FALSE, fig.cap = "Cumulative Deaths in Countries with Universal Healthcare"}
+# ANOVA table to compliment Figure 2.
+knitr::kable(anova(lm(Cumulative_deaths ~ Country, data = Universal)),digits = 3)
+```

@@ -11,6 +11,9 @@ library(tidyverse)
 library(kableExtra)
 library(readr)
 library(lattice)
+library(ggplot2)
+library(grid)
+library(directlabels)
 ```
 
 # COVID-19 Research Project
@@ -20,10 +23,15 @@ library(lattice)
 Global <- read_csv("~/GitHub/COVID-19/raw_data/WHO-COVID-19-global-data.csv")
 
 NonUniversal <- Global %>%
-  filter(Country %in% c("Bangladesh", "Burundi", "Congo", "Ethiopia", "Jordan", "Kenya", "Nigeria", "Paraguay", "United Arab Emirates", "Tanzania", "Uganda", "United States of America"))
+  filter(Country %in% c("Bangladesh", "Burundi", "Congo", "Ethiopia", "Jordan", "Kenya", "Nigeria", "Paraguay", "United Arab Emirates", "United Republic of Tanzania", "Uganda", "United States of America")) %>%
+arrange(desc(Cumulative_deaths))
 
 Universal <- Global %>%
-  filter(Country %in% c("Australia", "Bahrain", "Bhutan", "Botswana", "Brazil", "Brunei", "Canada", "Cuba", "Denmark", "Finland", "Georgia", "Greece", "Iceland", "Ireland", "Italy", "Kuwait", "Malta", "New Zealand", "North Korea", "Norway", "Oman", "Portugal", "San Marino", "Saudi Arabia", "South Africa", "Spain", "Sri Lanka", "Sweden", "Taiwan", "Trinidad and Tobago", "United Kingdom"))
+  filter(Country %in% c("Australia", "Bahrain", "Bhutan", "Botswana", "Brazil", "Brunei Darussalam", "Canada", "Cuba", "Denmark", "Finland", "Georgia", "Greece", "Iceland", "Ireland", "Italy", "Kuwait", "Malta", "New Zealand", "Norway", "Oman", "Portugal", "San Marino", "Saudi Arabia", "South Africa", "Spain", "Sri Lanka", "Sweden", "Taiwan", "Trinidad and Tobago", "The United Kingdom"))
+
+LastDayNonUniversal <- filter(NonUniversal, Date_reported == "2020-07-15")
+
+LastDayUniversal <- filter(Universal, Date_reported == "2020-07-15")
 ```
 
 ## Abstract (tl;dr)
@@ -34,21 +42,50 @@ Universal government-funded health systems are such a complex beast that only 31
 ## Hypothesis
 I hypothesize that countries with non-universal health insurance systems experience greater COVID-19 mortality rates than countries with universal government-funded health systems.
 
-In countries that have non-universal health insurance systems, some citizens may have private insurance, some may be eligible for subsidized public healthcare, and some may be completely without insurance. Countries that fall under this category are Bangladesh, Burundi, the Democratic Republic of Congo, Ethiopia, Jordan, Kenya, Nigeria, Paraguay, the United Arab Emirates, Tanzania, Uganda, and of course, the United States. Egypt, India, and Indonesia also fall into this category but will be left out of this report, as their healthcare systems are in transition. n = 12.
+In countries that have non-universal health insurance systems, some citizens may have private insurance, some may be eligible for subsidized public healthcare, and some may be completely without insurance. Countries that fall under this category are Bangladesh, Burundi, the Democratic Republic of Congo, Ethiopia, Jordan, Kenya, Nigeria, Paraguay, Tanzania, Uganda, the United Arab Emirates, and of course, the United States. Egypt, India, and Indonesia also fall into this category but will be left out of this report, as their healthcare systems are in transition. n = 12.
 
-In countries with universal government-funded health systems, healthcare is available to all citizens, no matter what. Countries that fall under this category are Australia, Bahrain, Bhutan, Botswana, Brazil, Brunei, Canada, Cuba, Denmark, Finland, Georgia, Greece, Iceland, Ireland, Italy, Kuwait, Malta, New Zealand, North Korea, Norway, Oman, Portugal, San Marino, Saudi Arabia, South Africa, Spain, Sri Lanka, Sweden, Taiwan, Trinidad and Tobago, and the United Kingdom. n = 31.
+In countries with universal government-funded health systems, healthcare is available to all citizens, no matter what. Countries that fall under this category are Australia, Bahrain, Bhutan, Botswana, Brazil, Brunei, Canada, Cuba, Denmark, Finland, Georgia, Greece, Iceland, Ireland, Italy, Kuwait, Malta, New Zealand, Norway, Oman, Portugal, San Marino, Saudi Arabia, South Africa, Spain, Sri Lanka, Sweden, Trinidad and Tobago, and the United Kingdom. Taiwan and North Korea also fall into this category but will be left out of this report, as they have not released their coronavirus data. n = 29.
 
 ## Datasets used
 My main dataset is the World Health Organizaion's international dataset, which includes number of cases and deaths reported both daily and cumulatively, by country. This dataset is updated daily and can be found at https://covid19.who.int/.
 
-```{r, echo = FALSE}
-ggplot(NonUniversal, aes(x = Date_reported, y = Cumulative_cases)) +
-  geom_line() +
-  facet_wrap(~ Country)
+First, we'll examine the cumulative deaths per country, grouped by type of healtcare.
 
-ggplot(Universal, aes(x = Date_reported, y = Cumulative_cases)) +
+```{r, echo = FALSE}
+
+ggplot(NonUniversal, aes(x = Date_reported, y = Cumulative_deaths, color = Country)) +
   geom_line() +
-  facet_wrap(~ Country)
+  scale_y_log10() +
+   ggtitle("Cumulative Deaths in Countries with Non-Universal Healthcare") +
+  labs(x = "Month", y = "Cumulative Deaths") +
+  geom_dl(aes(label = Country), method = list(dl.combine("last.points")), cex = 0.8) +
+  coord_cartesian(expand = 2020-08-01, clip = "off") +
+  theme(legend.position = "none")
+
+ggplot(Universal, aes(x = Date_reported, y = Cumulative_deaths, color = Country)) +
+  geom_line() +
+  scale_y_log10() +
+  ggtitle("Cumulative Deaths in Countries with Universal Healthcare") +
+  labs(x = "Month", y = "Cumulative Deaths") +
+  geom_dl(aes(label = Country), method = list(dl.combine("last.points")), cex = 0.8) +
+  coord_cartesian(expand = 2020-08-01, clip = "off") +
+  theme(legend.position = "none")
+```
+
+```{r, echo = FALSE}
+ggplot(LastDayNonUniversal, aes(x = Cumulative_deaths, y = Country)) +
+  geom_point(size = 4) +
+  geom_segment(aes(xend = 0, yend = Country), size = 2) +
+  scale_x_log10()
+
+ggplot(LastDayUniversal, aes(x = Cumulative_deaths, y = Country)) +
+  geom_point(size = 4) +
+  geom_segment(aes(xend = 0, yend = Country), size = 2) +
+  scale_x_log10()
+```
+
+```{r anova, echo = FALSE, fig.cap="One-way ANOVA of Cumulative Cases in Countries with Non-Universal Healthcare"}
+knitr::kable(anova(lm(Cumulative_cases ~ Country, data = NonUniversal)),digits = 3)
 ```
 
 ## Description of analyses
@@ -57,3 +94,29 @@ ggplot(Universal, aes(x = Date_reported, y = Cumulative_cases)) +
 
 ## Viewing this project
 The completed project files can be accessed online at file:///C:/Users/Owner/Documents/GitHub/COVID-19/README.html. The repo for this reproducible project is also publicly available at https://github.com/MonicaPittiglio/COVID-19.
+
+```{r, echo = FALSE}
+ggplot(NonUniversal, aes(x = Date_reported, y = Cumulative_cases)) +
+  geom_line() +
+  facet_wrap(~ Country) +
+  ggtitle("Cumulative Cases in Countries with Non-Universal Healthcare") +
+  labs(x = "Month", y = "Cumulative Cases")
+
+ggplot(Universal, aes(x = Date_reported, y = Cumulative_cases)) +
+  geom_line() +
+  facet_wrap(~ Country) +
+  ggtitle("Cumulative Cases in Countries with Universal Healthcare") +
+  labs(x = "Month", y = "Cumulative Cases")
+
+ggplot(NonUniversal, aes(x = Date_reported, y = Cumulative_deaths)) +
+  geom_line() +
+  facet_wrap(~ Country) +
+  ggtitle("Cumulative Deaths in Countries with Non-Universal Healthcare") +
+  labs(x = "Month", y = "Cumulative Deaths")
+
+ggplot(Universal, aes(x = Date_reported, y = Cumulative_deaths)) +
+  geom_line() +
+  facet_wrap(~ Country) +
+  ggtitle("Cumulative Deaths in Countries with Universal Healthcare") +
+  labs(x = "Month", y = "Cumulative Deaths")
+```

@@ -51,6 +51,11 @@ NonUniversalPop <- Population %>%
 
 UniversalPop <- Population %>%
   filter(Country_name %in% c("Australia", "Bahrain", "Bhutan", "Botswana", "Brazil", "Brunei Darussalam", "Canada", "Cuba", "Denmark", "Finland", "Georgia", "Greece", "Iceland", "Ireland", "Italy", "Kuwait", "Malta", "New Zealand", "Norway", "Oman", "Portugal", "San Marino", "Saudi Arabia", "South Africa", "Spain", "Sri Lanka", "Sweden", "Trinidad and Tobago", "The United Kingdom"))
+
+Population_and_Healthcare <- read_csv("~/GitHub/COVID-19/output/Population and Healthcare.csv")
+
+AllPopAndHealth <- Population_and_Healthcare %>%
+  filter(Country_name %in% c("Australia", "Bahrain", "Bhutan", "Botswana", "Brazil", "Brunei Darussalam", "Canada", "Cuba", "Denmark", "Finland", "Georgia", "Greece", "Iceland", "Ireland", "Italy", "Kuwait", "Malta", "New Zealand", "Norway", "Oman", "Portugal", "San Marino", "Saudi Arabia", "South Africa", "Spain", "Sri Lanka", "Sweden", "Trinidad and Tobago", "The United Kingdom", "Bangladesh", "Burundi", "Congo", "Ethiopia", "Jordan", "Kenya", "Nigeria", "Paraguay", "United Arab Emirates", "United Republic of Tanzania", "Uganda", "United States of America"))
 ```
 
 ## Abstract (tl;dr)
@@ -64,6 +69,8 @@ I hypothesize that countries with non-universal health insurance systems experie
 In countries that have non-universal health insurance systems, some citizens may have private insurance, some may be eligible for subsidized public healthcare, and some may be completely without insurance. Countries that fall under this category are Bangladesh, Burundi, the Democratic Republic of Congo, Ethiopia, Jordan, Kenya, Nigeria, Paraguay, Tanzania, Uganda, the United Arab Emirates, and of course, the United States. Egypt, India, and Indonesia also fall into this category but will be left out of this report, as their healthcare systems are in transition. n = 12.
 
 In countries with universal government-funded health systems, healthcare is available to all citizens, no matter what. Countries that fall under this category are Australia, Bahrain, Bhutan, Botswana, Brazil, Brunei, Canada, Cuba, Denmark, Finland, Georgia, Greece, Iceland, Ireland, Italy, Kuwait, Malta, New Zealand, Norway, Oman, Portugal, San Marino, Saudi Arabia, South Africa, Spain, Sri Lanka, Sweden, Trinidad and Tobago, and the United Kingdom. Taiwan and North Korea also fall into this category but will be left out of this report, as they have not released their coronavirus data. n = 29.
+
+Other types of healthcare do exist. Some governments provide universal public insurance, universal public-private insurance, or universal private insurance. Those healthcare systems, however, are not examined in this report.
 
 ## Datasets used
 My main dataset is the World Health Organization's international dataset, which includes number of cases and deaths reported both daily and cumulatively, by country. This dataset is updated daily and can be found at https://covid19.who.int/. Data collection began in mid-January and this report includes data through August 2nd, 2020.
@@ -126,28 +133,48 @@ knitr::kable(LastDayUniversal %>% summarize(N = n(),
 			 table.attr = "style='width:70%;'") %>% kable_styling(position = "center")
 ```
 
-The total number of deaths as of August 2nd in countries with non-universal healthcare is 234,315. Brazil leads the pack with a cumulative 92,475 deaths. This is followed by the United Kingdom, which has a cumulative 46,193 deaths, and Italy, which has a cumulative 35,146 deaths. These top three countries account for 74% of the deaths in countries that have non-universal healthcare.
+The total number of deaths as of August 2nd in countries with universal healthcare is 234,315. Brazil leads the pack with a cumulative 92,475 deaths. This is followed by the United Kingdom, which has a cumulative 46,193 deaths, and Italy, which has a cumulative 35,146 deaths. These top three countries account for 74% of the deaths in countries that have non-universal healthcare.
 
-Even a brief glance will tell you that the dataset with more countries, and consequently more people, has more deaths. In order to compare the universal and nonuniversal datasets, we have to divide the number of deaths by total population to get deaths per capita. The population dataset I used is from worldbank.org. Key sorces for this dataset are listed as the United Nations, various census reports, and Eurostat, among other reputable sources. This dataset can be found at https://data.worldbank.org/indicator/SP.POP.TOTL. It was last updated in 2019, but includes data as far back as 1960.
+Between these two datasets, table 1 had a higher mean but an enormous standard deviation, no doubt due to the pull of the United States' death toll, which is 48 times that of the next country in the dataset. Table 2 had the larger median, and a standard deviation 45% smaller than that of table 1. This indicates that individual countries with universal healthcare tend towards more overall coronavirus deaths than those with non-universal healthcare.
 
-```{r, fig.align = "center", fig.width = 14, echo = FALSE}
-# Dot plots with lines of 2019 population, by country.
-ggplot(NonUniversalPop, aes(x = Year_2019, y = Country_name)) +
+The dataset with more countries, and consequently more people, has more deaths. In order to compare the universal and nonuniversal datasets, we have to look at deaths per capita. The population dataset I used is from worldbank.org. Key sorces for this dataset are listed as the United Nations, various census reports, and Eurostat, among other reputable sources. It can be found at https://data.worldbank.org/indicator/SP.POP.TOTL. It is updated yearly, with the most recent data being from 2019.
+
+```{r, fig.align = "center", fig.width = 14, fig.height = 6, echo = FALSE}
+# Point plot with lines of 2019 population, by healthcare type.
+AllPopAndHealth%>%
+  mutate(CN = fct_reorder(Country_name, Year_2019)) %>%
+  ggplot( aes(x = Year_2019, y = CN, color = Healthcare)) +
   geom_point(size = 4) +
   geom_segment(aes(xend = 0, yend = Country_name), size = 2) +
-  ggtitle("Figure 3: Total population in Countries with Non-Universal Healthcare") +
-  labs(x = "Population", y = "Country")
-
-ggplot(UniversalPop, aes(x = Year_2019, y = Country_name)) +
-  geom_point(size = 4) +
-  geom_segment(aes(xend = 0, yend = Country_name), size = 2) +
-  ggtitle("Figure 4: Total population in Countries with Non-Universal Healthcare") +
+  ggtitle("Figure 3: Total population in Countries with both Healthcare Types") +
   labs(x = "Population", y = "Country")
 ```
 
-Notably, the United States of America comprises 97% of the total deaths in countries with non-universal healthcare, and 22% of the total global deaths despite comprising only 4% of the global population.
+```{r, echo = FALSE}
+# Table of statistics for population counts by healthcare type. Compliments above plot.
+knitr::kable(AllPopAndHealth %>%
+              group_by(Healthcare) %>%
+              summarize(N = n(),
+              Sum = sum(Year_2019),
+			 			  Mean = mean(Year_2019), 
+			 			  Median = median(Year_2019), 
+			 			  StdDev = sd(Year_2019)), 
+			 align = c('l','c','c','c','c'), 
+			 digits = 2,
+			 format = "html", 
+			 caption = "**Table 3**: Population Summary by Healthcare Type",
+			 table.attr = "style='width:70%;'") %>% kable_styling(position = "center")
+```
+
+This graph's axis is not on a log scale, so we can clearly see that even though there are less countries with non-universal healthcare, they have a larger summed population than countries that have universal healthcare. In fact, the four most highly-populated countries that have non-universal healthcare account for 51% of the total population between all 41 countries in this graph. The average population of the non-universal healthcare countries is also 4 times larger than the average population of the universal healthcare countries. That said, their standard deviation is also much larger, no doubt due to the United States' massive population.
+
+
 
 ## Description of analyses
+
+It's certainly possible that it's more complicated, expensive, and difficult to implement universal healthcare in countries with large populations. This would explain the results of figure 3 and table 3, through which we found that one-quarter of the countries without universal healthcare (n = 4) accounted for over 50% of the total population in all 41 countries that we looked at. That, however, is not to say that private insurance is any less complicated, expensive, or difficult - the burden is simply shifted off the the country's government and redirected to its insurance companies and citizens.
+
+Notably, the United States of America contributes 97% of the total deaths in countries with non-universal healthcare, and 22% of the total global deaths despite comprising only 4% of the global population.
 
 ## Conclusions
 
@@ -171,19 +198,6 @@ ggplot() +
   ggtitle("Cumulative Cases and Deaths in Countries with Non-Universal Healthcare") +
   labs(x = "Month", y = "Cumulative Cases") +
   scale_y_log10()
-```
-
-```{r, echo = FALSE}
-# Dot plots with lines of the most recent death data, by country.
-ggplot(LastDayNonUniversal, aes(x = Cumulative_deaths, y = Country)) +
-  geom_point(size = 4) +
-  geom_segment(aes(xend = 0, yend = Country), size = 2) +
-  scale_x_log10()
-
-ggplot(LastDayUniversal, aes(x = Cumulative_deaths, y = Country)) +
-  geom_point(size = 4) +
-  geom_segment(aes(xend = 0, yend = Country), size = 2) +
-  scale_x_log10()
 ```
 
 ```{r, echo = FALSE, fig.cap = "Cumulative Deaths in Countries with Non-Universal Healthcare"}

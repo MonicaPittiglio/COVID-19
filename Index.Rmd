@@ -6,6 +6,7 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
+# Just a load of all the packages I used or attempted to use for this project.
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(kableExtra)
@@ -16,6 +17,9 @@ library(grid)
 library(directlabels)
 library(tidyquant)
 library(dplyr)
+library(sf)
+library(rnaturalearth)
+library(rnaturalearthdata)
 ```
 
 # COVID-19 Research Project
@@ -26,12 +30,18 @@ library(dplyr)
 # Load of all coronavirus datasets, dataframes.
 Global <- read_csv("~/GitHub/COVID-19/raw_data/WHO-COVID-19-global-data (1).csv")
 
+# Comprehensive COVID data, filtered for countries and separated by healthcare type
 NonUniversal <- Global %>%
   filter(Country %in% c("Bangladesh", "Burundi", "Congo", "Ethiopia", "Jordan", "Kenya", "Nigeria", "Paraguay", "United Arab Emirates", "United Republic of Tanzania", "Uganda", "United States of America"))
 
 Universal <- Global %>%
   filter(Country %in% c("Australia", "Bahrain", "Bhutan", "Botswana", "Brazil", "Brunei Darussalam", "Canada", "Cuba", "Denmark", "Finland", "Georgia", "Greece", "Iceland", "Ireland", "Italy", "Kuwait", "Malta", "New Zealand", "Norway", "Oman", "Portugal", "San Marino", "Saudi Arabia", "South Africa", "Spain", "Sri Lanka", "Sweden", "Trinidad and Tobago", "The United Kingdom"))
 
+# Comprehensive COVID data, filtered for countries
+AllCOVID <- Global %>%
+  filter(Country %in% c("Australia", "Bahrain", "Bhutan", "Botswana", "Brazil", "Brunei Darussalam", "Canada", "Cuba", "Denmark", "Finland", "Georgia", "Greece", "Iceland", "Ireland", "Italy", "Kuwait", "Malta", "New Zealand", "Norway", "Oman", "Portugal", "San Marino", "Saudi Arabia", "South Africa", "Spain", "Sri Lanka", "Sweden", "Trinidad and Tobago", "The United Kingdom", "Bangladesh", "Burundi", "Congo", "Ethiopia", "Jordan", "Kenya", "Nigeria", "Paraguay", "United Arab Emirates", "United Republic of Tanzania", "Uganda", "United States of America"))
+
+# Calculations of total deaths, both by healthcare type and in total
 LastDayGlobal <- filter(Global, Date_reported == "2020-08-02")
 sum(LastDayGlobal$Cumulative_deaths)
 
@@ -43,7 +53,7 @@ sum(LastDayUniversal$Cumulative_deaths)
 ```
 
 ```{r, include = FALSE}
-# Load population data
+# Load population data, filtered by country and separated by healthcare type
 Population <- read_csv("~/GitHub/COVID-19/output/Population.csv")
 
 NonUniversalPop <- Population %>%
@@ -52,6 +62,7 @@ NonUniversalPop <- Population %>%
 UniversalPop <- Population %>%
   filter(Country_name %in% c("Australia", "Bahrain", "Bhutan", "Botswana", "Brazil", "Brunei Darussalam", "Canada", "Cuba", "Denmark", "Finland", "Georgia", "Greece", "Iceland", "Ireland", "Italy", "Kuwait", "Malta", "New Zealand", "Norway", "Oman", "Portugal", "San Marino", "Saudi Arabia", "South Africa", "Spain", "Sri Lanka", "Sweden", "Trinidad and Tobago", "The United Kingdom"))
 
+# Load data that includes population and healthcare type by country
 Population_and_Healthcare <- read_csv("~/GitHub/COVID-19/output/Population and Healthcare.csv")
 
 AllPopAndHealth <- Population_and_Healthcare %>%
@@ -72,10 +83,12 @@ In countries with universal government-funded health systems, healthcare is avai
 
 Other types of healthcare do exist. Some governments provide universal public insurance, universal public-private insurance, or universal private insurance. Those healthcare systems, however, are not examined in this report.
 
+!!!!!!!!! A MAP OF THE COUNTRIES WE'LL BE LOOKING AT!!!!!!!!!!!!
+
 ## Datasets used
 My main dataset is the World Health Organization's international dataset, which includes number of cases and deaths reported both daily and cumulatively, by country. This dataset is updated daily and can be found at https://covid19.who.int/. Data collection began in mid-January and this report includes data through August 2nd, 2020.
 
-First, we'll examine the cumulative deaths per country, grouped by healthcare type. Keep in mind that the Y axis of the following two graphs are on log scales, making the outliers appear less distinguished but the rest of the data more differentiable.
+First, we'll examine each healthcare type individually by viewing the cumulative deaths per country, grouped by healthcare type. Keep in mind that the Y axis of the following two graphs are on log scales, making the outliers appear less distinguished but the rest of the data more differentiable.
 
 ```{r, fig.align = "center", fig.height = 9, echo = FALSE}
 # Line graph of total deaths by country, non-universal healthcare.
@@ -139,14 +152,14 @@ Between these two datasets, table 1 had a higher mean but an enormous standard d
 
 The dataset with more countries, and consequently more people, has more deaths. In order to compare the universal and nonuniversal datasets, we have to look at deaths per capita. The population dataset I used is from worldbank.org. Key sorces for this dataset are listed as the United Nations, various census reports, and Eurostat, among other reputable sources. It can be found at https://data.worldbank.org/indicator/SP.POP.TOTL. It is updated yearly, with the most recent data being from 2019.
 
-```{r, fig.align = "center", fig.width = 14, fig.height = 6, echo = FALSE}
+```{r, fig.align = "center", fig.width = 14, fig.height = 7, echo = FALSE}
 # Point plot with lines of 2019 population, by healthcare type.
 AllPopAndHealth%>%
   mutate(CN = fct_reorder(Country_name, Year_2019)) %>%
   ggplot( aes(x = Year_2019, y = CN, color = Healthcare)) +
   geom_point(size = 4) +
   geom_segment(aes(xend = 0, yend = Country_name), size = 2) +
-  ggtitle("Figure 3: Total population in Countries with both Healthcare Types") +
+  ggtitle("Figure 3: Total population in Countries with Both Healthcare Types") +
   labs(x = "Population", y = "Country")
 ```
 
@@ -168,37 +181,96 @@ knitr::kable(AllPopAndHealth %>%
 
 This graph's axis is not on a log scale, so we can clearly see that even though there are less countries with non-universal healthcare, they have a larger summed population than countries that have universal healthcare. In fact, the four most highly-populated countries that have non-universal healthcare account for 51% of the total population between all 41 countries in this graph. The average population of the non-universal healthcare countries is also 4 times larger than the average population of the universal healthcare countries. That said, their standard deviation is also much larger, no doubt due to the United States' massive population.
 
+```{r echo = FALSE}
+# Joined population and healthcare data, filtered for usable data.
+All <- inner_join(AllPopAndHealth, AllCOVID, by = c("Country_name" = "Country"))
 
+# Created per capita column
+AllByPop <- All %>%
+  filter(Date_reported == "2020-08-02") %>%
+  filter(Country_name %in% c("Australia", "Bahrain", "Bhutan", "Botswana", "Brazil", "Brunei Darussalam", "Canada", "Cuba", "Denmark", "Finland", "Georgia", "Greece", "Iceland", "Ireland", "Italy", "Kuwait", "Malta", "New Zealand", "Norway", "Oman", "Portugal", "San Marino", "Saudi Arabia", "South Africa", "Spain", "Sri Lanka", "Sweden", "Trinidad and Tobago", "The United Kingdom", "Bangladesh", "Burundi", "Congo", "Ethiopia", "Jordan", "Kenya", "Nigeria", "Paraguay", "United Arab Emirates", "United Republic of Tanzania", "Uganda", "United States of America")) %>%
+  mutate(DeathsPerCapita = Cumulative_deaths / Year_2019) %>%
+  mutate(CasesPerCapita = Cumulative_cases / Year_2019)
+
+UniversalByPop <- All %>%
+  filter(Country_name %in% c("Australia", "Bahrain", "Bhutan", "Botswana", "Brazil", "Brunei Darussalam", "Canada", "Cuba", "Denmark", "Finland", "Georgia", "Greece", "Iceland", "Ireland", "Italy", "Kuwait", "Malta", "New Zealand", "Norway", "Oman", "Portugal", "San Marino", "Saudi Arabia", "South Africa", "Spain", "Sri Lanka", "Sweden", "Trinidad and Tobago", "The United Kingdom")) %>%
+  mutate(DeathsPerCapita = Cumulative_deaths / Year_2019) %>%
+  mutate(CasesPerCapita = Cumulative_cases / Year_2019)
+
+NonUniversalByPop <- All %>%
+  filter(Country_name %in% c("Bangladesh", "Burundi", "Congo", "Ethiopia", "Jordan", "Kenya", "Nigeria", "Paraguay", "United Arab Emirates", "United Republic of Tanzania", "Uganda", "United States of America")) %>%
+  mutate(DeathsPerCapita = Cumulative_deaths / Year_2019) %>%
+  mutate(CasesPerCapita = Cumulative_cases / Year_2019)
+```
+
+```{r, fig.align = "center", fig.width = 14, fig.height = 6, echo = FALSE}
+# Point plot with lines of deaths per capita
+AllByPop%>%
+  mutate(PC = fct_reorder(Country_name, DeathsPerCapita)) %>%
+  ggplot( aes(x = DeathsPerCapita, y = PC, color = Healthcare)) +
+  geom_point(size = 4) +
+  geom_segment(aes(xend = 0, yend = Country_name), size = 2) +
+  ggtitle("Figure 4: Total Deaths Per Capita in Countries with Both Healthcare Types") +
+  labs(x = "Population", y = "Country")
+```
+
+```{r, echo = FALSE}
+# Table of statistics for population counts by healthcare type. Compliments above plot.
+knitr::kable(AllByPop %>%
+              group_by(Healthcare) %>%
+              summarize(N = n(),
+              Sum = sum(DeathsPerCapita),
+			 			  Mean = mean(DeathsPerCapita), 
+			 			  Median = median(DeathsPerCapita), 
+			 			  StdDev = sd(DeathsPerCapita)), 
+			 align = c('l','c','c','c','c'), 
+			 digits = 6,
+			 format = "html", 
+			 caption = "**Table 4**: Summary of Deaths per Capita by Healthcare Type",
+			 table.attr = "style='width:70%;'") %>% kable_styling(position = "center")
+```
+
+The graph looks like it has completely flipped. While countries with universal healthcare have smaller populations, they tend to have far more deaths per capita than countries with non-universal healthcare - a total of 10 times more, actually, and an average of 4 times more. Interestingly, San Marino was last on the population graph, but has jumped to the very top of figure 4 as the country with the most deaths per capita.
+
+For a more in-depth look at what's going on in each country, we can view individual graphs of cases and deaths, per capita, in each country. Keep in mind that the x-axis are on log 10 scales for viewing ease, and that all of the graphs have the same scales so they can be compared.
+
+```{r, fig.align = "center", fig.width = 10, fig.height = 7, echo = FALSE}
+# Individual graphs for every country, and includes both cases and deaths per capita.
+ggplot() +
+  geom_line(data = NonUniversalByPop, aes(x = Date_reported, y = CasesPerCapita, color = "Cases")) +
+  geom_line(data = NonUniversalByPop, aes(x = Date_reported, y = DeathsPerCapita, color = "Deaths")) +
+  facet_wrap(~ Country_name) +
+  ggtitle("Figure 5: Cumulative Cases to Deaths, Per Capita, in Countries with Non-Universal Healthcare") +
+  labs(x = "Month", y = "Cases and Deaths Per Capita") +
+  scale_y_log10()
+
+ggplot() +
+  geom_line(data = UniversalByPop, aes(x = Date_reported, y = CasesPerCapita, color = "Cases")) +
+  geom_line(data = UniversalByPop, aes(x = Date_reported, y = DeathsPerCapita, color = "Deaths")) +
+  facet_wrap(~ Country_name) +
+  ggtitle("Figure 6: Cumulative Cases to Deaths, Per Capita, in Countries with Non-Universal Healthcare") +
+  labs(x = "Month", y = "Cases and Deaths Per Capita") +
+  scale_y_log10()
+```
+
+This report's purpose is not to analyze cases, but these graphs allow us to see which countries have been able to keep their deaths from increasing as quickly as their cases, and the tables allow us to compare how well each healthcare system performs in the case to death ratio.  !!!!!!!!!!!!!!!! ADD TABLES !!!!!!!!!!!!!!
+
+Notably, Burundi, Bhutan, and Botswana have been able to virtually halt their deaths even though their cases continue to climb. The same cannot be said of Italy, where there appears to be a short time period where their deaths came horrifyingly close to their number of cases.
 
 ## Description of analyses
 
 It's certainly possible that it's more complicated, expensive, and difficult to implement universal healthcare in countries with large populations. This would explain the results of figure 3 and table 3, through which we found that one-quarter of the countries without universal healthcare (n = 4) accounted for over 50% of the total population in all 41 countries that we looked at. That, however, is not to say that private insurance is any less complicated, expensive, or difficult - the burden is simply shifted off the the country's government and redirected to its insurance companies and citizens.
 
+Figure 4 and table 4 tell us that there are more deaths per capita in countries with universal healthcare than those with non-universal healthcare. This could be because universal healthcare makes for long wait times to be seen by doctors, and may cause doctors to cut corners due to monetary issues. Perhaps most importantly, it's well-documented that public, government-funded hospitals function less efficiently than private hospitals.
+
 Notably, the United States of America contributes 97% of the total deaths in countries with non-universal healthcare, and 22% of the total global deaths despite comprising only 4% of the global population.
 
 ## Conclusions
+The data does not support the hypothesis. While countries with non-universal healthcare average more deaths overall than countries with non-universal healthcare, that is due almost entirely to the data from one country - the United States. Countries with universal healthcare saw more deaths, both in total and per capita.
 
 ## Viewing this project
 The completed project files can be accessed online at file:///C:/Users/Owner/Documents/GitHub/COVID-19/README.html. The repo for this reproducible project is also publicly available at https://github.com/MonicaPittiglio/COVID-19.
 
-```{r, fig.align = "center", fig.width = 10, fig.height = 7, echo = FALSE}
-# Next 4 are graphs for every country, both cases and deaths.
-ggplot() +
-  geom_line(data = NonUniversal, aes(x = Date_reported, y = Cumulative_cases, color = "Cases")) +
-  geom_line(data = NonUniversal, aes(x = Date_reported, y = Cumulative_deaths, color = "Deaths")) +
-  facet_wrap(~ Country) +
-  ggtitle("Cumulative Cases and Deaths in Countries with Non-Universal Healthcare") +
-  labs(x = "Month", y = "Cumulative Cases") +
-  scale_y_log10()
-
-ggplot() +
-  geom_line(data = Universal, aes(x = Date_reported, y = Cumulative_cases, color = "Cases")) +
-  geom_line(data = Universal, aes(x = Date_reported, y = Cumulative_deaths, color = "Deaths")) +
-  facet_wrap(~ Country) +
-  ggtitle("Cumulative Cases and Deaths in Countries with Non-Universal Healthcare") +
-  labs(x = "Month", y = "Cumulative Cases") +
-  scale_y_log10()
-```
 
 ```{r, echo = FALSE, fig.cap = "Cumulative Deaths in Countries with Non-Universal Healthcare"}
 # ANOVA table to compliment Figure 1.

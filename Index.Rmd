@@ -21,7 +21,6 @@ library(dplyr)
 library(sf)
 library(rgeos)
 library(rnaturalearth)
-library(rnaturalearthdata)
 ```
 
 # COVID-19 Research Project
@@ -73,32 +72,33 @@ Universal government-funded health systems are such a complex beast that only 31
 ## Hypothesis
 I hypothesize that countries with non-universal health insurance systems experience greater COVID-19 mortality rates than countries with universal government-funded health systems.
 
-In countries that have non-universal health insurance systems, some citizens may have private insurance, some may be eligible for subsidized public healthcare, and some may be completely without insurance. Countries that fall under this category are Bangladesh, Burundi, the Democratic Republic of Congo, Ethiopia, Jordan, Kenya, Nigeria, Paraguay, Tanzania, Uganda, the United Arab Emirates, and of course, the United States. Egypt, India, and Indonesia also fall into this category but will be left out of this report, as their healthcare systems are in transition. n = 12.
+In countries that have non-universal health insurance systems, some citizens may have private insurance, some may be eligible for subsidized public healthcare, and some may be completely without insurance. Countries that fall under this category are Bangladesh, Burundi, the Democratic Republic of Congo, Ethiopia, Jordan, Kenya, Nigeria, Paraguay, Tanzania, Uganda, the United Arab Emirates, and of course, the United States. Egypt, India, and Indonesia also fall into this category but will be left out of this report, as their healthcare systems are in transition.
 
-In countries with universal government-funded health systems, healthcare is available to all citizens, no matter what. Countries that fall under this category are Australia, Bahrain, Bhutan, Botswana, Brazil, Brunei, Canada, Cuba, Denmark, Finland, Georgia, Greece, Iceland, Ireland, Italy, Kuwait, Malta, New Zealand, Norway, Oman, Portugal, San Marino, Saudi Arabia, South Africa, Spain, Sri Lanka, Sweden, Trinidad and Tobago, and the United Kingdom. Taiwan and North Korea also fall into this category but will be left out of this report, as they have not released their coronavirus data. n = 29.
+In countries with universal government-funded health systems, healthcare is available to all citizens, no matter what. Countries that fall under this category are Australia, Bahrain, Bhutan, Botswana, Brazil, Brunei, Canada, Cuba, Denmark, Finland, Georgia, Greece, Iceland, Ireland, Italy, Kuwait, Malta, New Zealand, Norway, Oman, Portugal, San Marino, Saudi Arabia, South Africa, Spain, Sri Lanka, Sweden, Trinidad and Tobago, and the United Kingdom. Taiwan and North Korea also fall into this category but will be left out of this report, as they have not released their coronavirus data.
 
 Other types of healthcare do exist. Some governments provide universal public insurance, universal public-private insurance, or universal private insurance. Those healthcare systems, however, are not examined in this report.
 
 ```{r, echo = FALSE, include = FALSE}
 
 # Load data that includes population and healthcare type by country
-Population_and_Healthcare <- read_csv("~/GitHub/COVID-19/output/Population and Healthcare.csv")
+RePopulation_and_Healthcare <- read_csv("~/GitHub/COVID-19/output/Re Population and Healthcare.csv")
 
-AllPopAndHealth <- Population_and_Healthcare %>%
-  filter(Country_name %in% c("Australia", "Bahrain", "Bhutan", "Botswana", "Brazil", "Brunei Darussalam", "Canada", "Cuba", "Denmark", "Finland", "Georgia", "Greece", "Iceland", "Ireland", "Italy", "Kuwait", "Malta", "New Zealand", "Norway", "Oman", "Portugal", "San Marino", "Saudi Arabia", "South Africa", "Spain", "Sri Lanka", "Sweden", "Trinidad and Tobago", "The United Kingdom", "Bangladesh", "Burundi", "Congo", "Ethiopia", "Jordan", "Kenya", "Nigeria", "Paraguay", "United Arab Emirates", "United Republic of Tanzania", "Uganda", "United States of America"))
+NewPopAndHealth <- RePopulation_and_Healthcare %>%
+  filter(Country_name %in% c("Australia", "Bahrain", "Bhutan", "Botswana", "Brazil", "Brunei", "Canada", "Cuba", "Denmark", "Finland", "Georgia", "Greece", "Iceland", "Ireland", "Italy", "Kuwait", "Malta", "New Zealand", "Norway", "Oman", "Portugal", "San Marino", "Saudi Arabia", "South Africa", "Spain", "Sri Lanka", "Sweden", "Trinidad and Tobago", "United Kingdom", "Bangladesh", "Burundi", "Congo", "Ethiopia", "Jordan", "Kenya", "Nigeria", "Paraguay", "United Arab Emirates", "Tanzania", "Uganda", "United States"))
 
 # Creation of data set to be used in map below.
-world <- ne_countries(scale = "medium", returnclass = "sf")
-class(AllPopAndHealth)
+World <- ne_countries(scale = "medium", returnclass = "sf")
+class(NewPopAndHealth)
 
-Map <- full_join(world, AllPopAndHealth, by = c("name" = "Country_name"))
+Map <- full_join(World, NewPopAndHealth, by = c("name" = "Country_name"))
 ```
 
-```{r, echo = FALSE, fig.align = "center"}
+```{r, echo = FALSE, fig.width = 14, fig.align = "center"}
 # Map of countries examined in this report, by healthcare type.
 ggplot(data = Map) +
     geom_sf(aes(fill = Healthcare)) +
-  scale_fill_manual(values = c("red", "blue"))
+  scale_fill_manual(values = c("red", "blue")) +
+   ggtitle("Figure 1: Countries Examined in This Report, by Healthcare Type")
 ```
 
 ## Datasets used
@@ -112,7 +112,7 @@ First, we'll examine each healthcare type individually by viewing the cumulative
 ggplot(NonUniversal, aes(x = Date_reported, y = Cumulative_deaths, color = Country)) +
   geom_line() +
   scale_y_log10() +
-   ggtitle("Figure 1: Cumulative Deaths Over Time in Countries with Non-Universal Healthcare") +
+   ggtitle("Figure 2: Cumulative Deaths Over Time in Countries with Non-Universal Healthcare") +
   labs(x = "Month", y = "Cumulative Deaths") +
   geom_dl(aes(label = Country), method = list(dl.combine("last.points")), cex = 0.8) +
   coord_x_date(xlim = c("2020-01-15", "2020-11-01")) +
@@ -141,7 +141,7 @@ The total number of deaths as of August 2nd in countries with non-universal heal
 ggplot(Universal, aes(x = Date_reported, y = Cumulative_deaths, color = Country)) +
   geom_line() +
   scale_y_log10() +
-  ggtitle("Figure 2: Cumulative Deaths Over Time in Countries with Universal Healthcare") +
+  ggtitle("Figure 3: Cumulative Deaths Over Time in Countries with Universal Healthcare") +
   labs(x = "Month", y = "Cumulative Deaths") +
   geom_dl(aes(label = Country), method = list(dl.combine("last.points")), cex = 0.8) +
   coord_x_date(xlim = c("2020-01-15", "2020-10-01")) +
@@ -169,13 +169,19 @@ Between these two datasets, table 1 had a higher mean but an enormous standard d
 The dataset with more countries, and consequently more people, has more deaths. In order to compare the universal and nonuniversal datasets, we have to look at deaths per capita. The population dataset I used is from worldbank.org. Key sorces for this dataset are listed as the United Nations, various census reports, and Eurostat, among other reputable sources. It can be found at https://data.worldbank.org/indicator/SP.POP.TOTL. It is updated yearly, with the most recent data being from 2019.
 
 ```{r, fig.align = "center", fig.width = 14, fig.height = 7, echo = FALSE}
+# Load data that includes population and healthcare type by country.
+Population_and_Healthcare <- read_csv("~/GitHub/COVID-19/output/Population and Healthcare.csv")
+
+AllPopAndHealth <- Population_and_Healthcare %>%
+  filter(Country_name %in% c("Australia", "Bahrain", "Bhutan", "Botswana", "Brazil", "Brunei Darussalam", "Canada", "Cuba", "Denmark", "Finland", "Georgia", "Greece", "Iceland", "Ireland", "Italy", "Kuwait", "Malta", "New Zealand", "Norway", "Oman", "Portugal", "San Marino", "Saudi Arabia", "South Africa", "Spain", "Sri Lanka", "Sweden", "Trinidad and Tobago", "The United Kingdom", "Bangladesh", "Burundi", "Congo", "Ethiopia", "Jordan", "Kenya", "Nigeria", "Paraguay", "United Arab Emirates", "United Republic of Tanzania", "Uganda", "United States of America"))
+
 # Point plot with lines of 2019 population, by healthcare type.
 AllPopAndHealth%>%
   mutate(CN = fct_reorder(Country_name, Year_2019)) %>%
   ggplot( aes(x = Year_2019, y = CN, color = Healthcare)) +
   geom_point(size = 4) +
   geom_segment(aes(xend = 0, yend = Country_name), size = 2) +
-  ggtitle("Figure 3: Total population in Countries with Both Healthcare Types") +
+  ggtitle("Figure 4: Total population in Countries with Both Healthcare Types") +
   labs(x = "Population", y = "Country")
 ```
 
@@ -236,7 +242,7 @@ AllByPop%>%
   ggplot( aes(x = DeathsPerCapita, y = PC, color = Healthcare)) +
   geom_point(size = 4) +
   geom_segment(aes(xend = 0, yend = Country_name), size = 2) +
-  ggtitle("Figure 4: Total Deaths Per Capita in Countries with Both Healthcare Types") +
+  ggtitle("Figure 5: Total Deaths Per Capita in Countries with Both Healthcare Types") +
   labs(x = "Population", y = "Country")
 ```
 
@@ -256,7 +262,7 @@ knitr::kable(AllByPop %>%
 			 table.attr = "style='width:70%;'") %>% kable_styling(position = "center")
 ```
 
-The graph looks like it has completely flipped. While countries with universal healthcare have smaller populations, they tend to have far more deaths per capita than countries with non-universal healthcare - a total of 10 times more, actually, and an average of 4 times more. Interestingly, San Marino was last on the population graph, but has jumped to the very top of figure 4 as the country with the most deaths per capita.
+The graph looks like it has completely flipped. While countries with universal healthcare have smaller populations, they tend to have far more deaths per capita than countries with non-universal healthcare - a total of 10 times more, actually, and an average of 4 times more. Interestingly, San Marino was last on the population graph, but has jumped to the very top of figure 5 as the country with the most deaths per capita.
 
 For a more in-depth look at what's going on in each country, we can view individual graphs of cases and deaths, per capita, in each country. Keep in mind that the x-axis are on log 10 scales for viewing ease, and that all of the graphs have the same scales so they can be compared.
 
@@ -265,7 +271,7 @@ For a more in-depth look at what's going on in each country, we can view individ
 ggplot() +
   geom_line(data = NonUniversalByPop, aes(x = Date_reported, y = NewDeathsPerCapita, color = "Deaths")) +
   facet_wrap(~ Country_name) +
-  ggtitle("Figure 5: Daily Deaths Per Capita, in Countries with Non-Universal Healthcare") +
+  ggtitle("Figure 6: Daily Deaths Per Capita, in Countries with Non-Universal Healthcare") +
   labs(x = "Month", y = "Daily Deaths Per Capita") +
   scale_y_log10() +
   theme(legend.position = "none")
@@ -288,7 +294,7 @@ knitr::kable(LastNonUniversalByPop %>%
 ggplot() +
   geom_line(data = UniversalByPop, aes(x = Date_reported, y = NewDeathsPerCapita, color = "Cases")) +
   facet_wrap(~ Country_name) +
-  ggtitle("Figure 6: Daily Deaths Per Capita, in Countries with Universal Healthcare") +
+  ggtitle("Figure 7: Daily Deaths Per Capita, in Countries with Universal Healthcare") +
   labs(x = "Month", y = "Daily Deaths Per Capita") +
   scale_y_log10() +
   theme(legend.position = "none")
@@ -300,9 +306,9 @@ Notably, Burundi, Bhutan, Botswana, and Sri Lanka have been able to virtually ha
 
 ## Description of analyses
 
-It's certainly possible that it's more complicated, expensive, and difficult to implement universal healthcare in countries with large populations. This would explain the results of figure 3 and table 3, through which we found that one-quarter of the countries without universal healthcare (n = 4) accounted for over 50% of the total population in all 41 countries that we looked at. That, however, is not to say that private insurance is any less complicated, expensive, or difficult - the burden is simply shifted off the the country's government and redirected to its insurance companies and citizens.
+It's certainly possible that it's more complicated, expensive, and difficult to implement universal healthcare in countries with large populations. This would explain the results of figure 4 and table 3, through which we found that one-quarter of the countries without universal healthcare (n = 4) accounted for over 50% of the total population in all 41 countries that we looked at. That, however, is not to say that private insurance is any less complicated, expensive, or difficult - the burden is simply shifted off the the country's government and redirected to its insurance companies and citizens.
 
-Figure 4 and table 4 tell us that there are more deaths per capita in countries with universal healthcare than those with non-universal healthcare. This could be because universal healthcare makes for long wait times to be seen by doctors, and may cause doctors to cut corners due to monetary issues. Perhaps most importantly, it's well-documented that public, government-funded hospitals function less efficiently than private hospitals.
+Figure 5 and table 4 tell us that there are more deaths per capita in countries with universal healthcare than those with non-universal healthcare. This could be because universal healthcare makes for long wait times to be seen by doctors, and may cause doctors to cut corners due to monetary issues. Perhaps most importantly, it's well-documented that public, government-funded hospitals function less efficiently than private hospitals.
 
 Notably, the United States of America contributes 97% of the total deaths in countries with non-universal healthcare, and 22% of the total global deaths despite comprising only 4% of the global population.
 
@@ -314,11 +320,11 @@ The completed project files can be accessed online at https://MonicaPittiglio.gi
 
 
 ```{r, echo = FALSE, fig.cap = "Cumulative Deaths in Countries with Non-Universal Healthcare"}
-# ANOVA table to compliment Figure 1.
+# ANOVA table to compliment Figure 2.
 knitr::kable(anova(lm(Cumulative_deaths ~ Country, data = NonUniversal)),digits = 3)
 ```
 
 ```{r anova, echo = FALSE, fig.cap = "Cumulative Deaths in Countries with Universal Healthcare"}
-# ANOVA table to compliment Figure 2.
+# ANOVA table to compliment Figure 3.
 knitr::kable(anova(lm(Cumulative_deaths ~ Country, data = Universal)),digits = 3)
 ```

@@ -347,8 +347,8 @@ The data does not support the hypothesis. While countries with non-universal hea
 The completed project files can be accessed online at https://MonicaPittiglio.github.io/COVID-19/. The repo for this reproducible project is also publicly available at https://github.com/MonicaPittiglio/COVID-19.
 
 ## Refrences
-Moreno-Serra R, Smith P. Does progress towards universal health coverage improve population health? The Lancet. 2012;
-380:917-23. doi:10.1016/S0140-6736(12)61039-3.
+Moreno-Serra R, Smith P. Does progress towards universal health coverage improve population health? *The Lancet.* 2012;
+*380*:917-23. doi:10.1016/S0140-6736(12)61039-3.
 
 
 “Population, Total.” World Bank, World Bank Group, 2020, data.worldbank.org/indicator/SP.POP.TOTL.

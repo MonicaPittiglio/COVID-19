@@ -66,7 +66,10 @@ UniversalPop <- Population %>%
   filter(Country_name %in% c("Australia", "Bahrain", "Bhutan", "Botswana", "Brazil", "Brunei Darussalam", "Canada", "Cuba", "Denmark", "Finland", "Georgia", "Greece", "Iceland", "Ireland", "Italy", "Kuwait", "Malta", "New Zealand", "Norway", "Oman", "Portugal", "San Marino", "Saudi Arabia", "South Africa", "Spain", "Sri Lanka", "Sweden", "Trinidad and Tobago", "The United Kingdom"))
 ```
 
-## Abstract (tl;dr)
+## Abstract
+There is much debate worldwide over which healthcare type is superior - universal or non-universal. With previous data backing the claim that broader health coverage increase access to necessary care, this report set out to determine whether countries with universal healthcare had lower COVID mortality rates than those with non-universal healthcare.
+
+World COVID death data and recent population data were both examined for total deaths and deaths as a proportion of population. The results disproved the hypothesis. While countries with universal healthcare averaged fewer deaths per country, they had more total deaths than countries with non-universal healthcare, despite having almost half as many total citizens. They averaged four times more deaths per capita than countries with non-universal healthcare, and totaled ten times more. This could be due to a decrease in the quality of care provided by practitioners employed under universal healthcare regulations, but the real cause will require further analysis.
 
 ## Introduction
 Universal government-funded health systems are such a complex beast that only 31 of the world's 32 developed nations have been able to make them work. In countries with non-universal healthcare, up to 90% of the population may be uninsured. There is data that exists already linking broader health coverage to better access to necessary care and improved overall health (Moreno-Serra and Smith, 2012). Thus, it is expect that healthcare type is also indicative of how well-equiped a country is to handle a global pandemic. 
@@ -105,10 +108,8 @@ ggplot(data = Map) +
    ggtitle("Figure 1: Countries Examined in This Report, by Healthcare Type")
 ```
 
-## Datasets used
-My main dataset is the World Health Organization's international dataset, which includes number of COVID cases and deaths reported both daily and cumulatively, by country (WHO, 2020). This dataset is updated daily. Data collection began in mid-January and this report includes data through August 2nd, 2020.
-
-First, we'll examine each healthcare type individually by viewing the cumulative deaths per country, grouped by healthcare type. Keep in mind that the Y axis of the following two graphs are on log scales, making the outliers appear less distinguished but the rest of the data more differentiable.
+## Analysis
+First, individual healthcare types were examined by viewing the cumulative deaths per country, grouped by healthcare type. Keep in mind that the Y axis of the following two graphs are on log scales, making the outliers appear less distinguished but the rest of the data more differentiable.
 
 ```{r, fig.align = "center", fig.height = 9, echo = FALSE, message = FALSE, warning = FALSE}
 # Line graph of total deaths by country, non-universal healthcare.
@@ -168,9 +169,9 @@ knitr::kable(LastDayUniversal %>% summarize(N = n(),
 
 The total number of deaths as of August 2nd in countries with universal healthcare is 234,315. Brazil leads the pack with a cumulative 92,475 deaths. This is followed by the United Kingdom, which has a cumulative 46,193 deaths, and Italy, which has a cumulative 35,146 deaths. These top three countries account for 74% of the deaths in countries that have universal healthcare.
 
-Between these two datasets, table 1 had a higher mean but an enormous standard deviation, no doubt due to the pull of the United States' death toll, which is 48 times that of the next country in the dataset. Table 2 had the larger median, and a standard deviation 45% smaller than that of table 1. This indicates that individual countries with universal healthcare tend towards more overall coronavirus deaths than those with non-universal healthcare.
+Upon comparison, we can see that countries with non-universal healthcare average more deaths than those with universal healthcare. However, they have an enormous standard deviation, no doubt due to the pull of the United States' death toll, which is 48 times that of the next country in the dataset. Countries with universal healthcare had the larger sum and median, with a standard deviation 45% smaller than that of the non-universal healthcare countries. In general, countries with universal healthcare tend towards more coronavirus deaths than those with non-universal healthcare.
 
-The dataset with more countries, and consequently more people, has more deaths. In order to compare the universal and nonuniversal datasets, we have to look at deaths per capita. The population dataset I used is from worldbank.org (World Bank, 2020). Key sorces for this dataset are listed as the United Nations, various census reports, and Eurostat, among other reputable sources. It is updated yearly, with the most recent data being from 2019.
+To quote Jonathan Swan in a recent interview with President Trump, "It's surely a relevant statistic to say if the US has 'x' population and 'x' percentage of death of that population..." He is correct - even if the president doesn't want us to, we must look at deaths per capita in order to compare the datasets properly. To begin the process, we'll examine population count separated by healthcare type.
 
 ```{r, echo = FALSE, include = FALSE}
 # Load data that includes population and healthcare type by country.
@@ -268,77 +269,79 @@ knitr::kable(AllByPop %>%
 			 table.attr = "style='width:70%;'") %>% kable_styling(position = "center")
 ```
 
-The graph looks like it has completely flipped. While countries with universal healthcare have smaller populations, they tend to have far more deaths per capita than countries with non-universal healthcare - a total of 10 times more, actually, and an average of 4 times more. Interestingly, San Marino was last on the population graph, but has jumped to the very top of figure 5 as the country with the most deaths per capita.
+Once we compared deaths as a proportion of population, the graph completely flipped. While countries with universal healthcare have smaller populations, they tend to have far more deaths per capita than countries with non-universal healthcare - a total of 10 times more, actually, and an average of 4 times more. Seven of the non-universal healthcare countries are among the bottom ten deaths per capita, and 18 of the universal healthcare countries are among the top 20 deaths per capita. When you consider that there are only 41 countries analyzed in this report, these results are remarkably clear. Notably, San Marino had the smallest population but the most deaths per capita.
 
 For a more in-depth look at what's going on in each country, we can view individual graphs of daily deaths per capita in each country. Keep in mind that the y-axis are on log 10 scales for viewing ease.
 
 ```{r, fig.align = "center", fig.width = 10, fig.height = 7, echo = FALSE, message = FALSE, warning = FALSE}
-# Individual graphs for every country with non-universal healthcare, of both cases and deaths per capita.
-# I want to stress that I spent roughly 10 hours trying to figure out how to add regression lines to facited plots, and while it is technically possible, it requires a significant formatting change because you have to add it to each graph individually. The resulting graphs look horrible when there are this many plots. So I did not add correlation constants, please forgive me.
+# Individual graphs for every country with non-universal healthcare, of daily deaths per capita.
+# I want to stress that I spent roughly 5 hours trying to figure out how to add regression lines to facited plots, and while it is technically possible, it requires a significant formatting change because you have to add it to each graph individually. The resulting graphs look horrible when there are this many plots.
 ggplot() +
   geom_line(data = NonUniversalByPop, aes(x = Date_reported, y = NewDeathsPerCapita, color = "Deaths")) +
   facet_wrap(~ Country_name) +
-  ggtitle("Figure 6: Daily Deaths Per Capita, in Countries with Non-Universal Healthcare") +
+  ggtitle("Figure 6: Daily Deaths Per Capita in Countries with Non-Universal Healthcare") +
   labs(x = "Month", y = "Daily Deaths Per Capita") +
   scale_y_log10() +
   theme(legend.position = "none")
 ```
 
 ```{r, echo = FALSE}
-# Average new deaths per capita in Countries with Non-Universal Healthcare. Compliments above plot.
-knitr::kable(NonUniversalByPop %>%
-              rename("Country" = "Country_name") %>%
-            summarize(Mean = mean(DeathsPerCapita),
-              Median = median(DeathsPerCapita),
-			 			  StdDev = sd(DeathsPerCapita), .groups = 'drop'),
-			 align = c('l','c','c','c','c'), 
-			 digits = 10,
-			 format = "html", 
-			 caption = "**Table 5**: Summary of Most Recent New Deaths per Capita in Countries with Non-Universal Healthcare",
-			 table.attr = "style='width:70%;'") %>% kable_styling(position = "center")
+# Joins logical healthcare type data with the rest of the data analyzed in above plot
+NonUniversalFinal <- right_join(NewPopAndHealth, NonUniversalByPop, by = "Country_name")
+
+# ANOVA table of new deaths per capita compared to healthcare type. Compliments Figure 6.
+knitr::kable(anova(lm(NewDeathsPerCapita ~ UHC, data = NonUniversalFinal)),
+             digits = 15,
+             align = c('l','c','c','c','c'),
+			 format = "html",
+			 caption = "**Table 5**: ANOVA of New Deaths per Capita in Countries with Non-Universal Healthcare",
+			 table.attr = "style='width:70%;'") %>% 
+  kable_styling(position = "center")
 ```
 
-On the most recent day analyzed
+Burundi and the United Republic of Tanzania have done a great job lately of getting their deaths under control. Paraguay, Congo, and the United Arab Emirates appear to have a mixture of good and bad days, where deaths per capita can range greatly. The United States of America, Bangladesh, and Ethiopia appear to be losing the fight to COVID - their deaths per capita are large and continuting to grow.
 
 ```{r, fig.align = "center", fig.width = 10, fig.height = 7, echo = FALSE, message = FALSE, warning = FALSE}
-# Individual graphs for every country with universal healthcare, of both cases and deaths per capita.
+# Individual graphs for every country with universal healthcare, of daily deaths per capita.
 ggplot() +
   geom_line(data = UniversalByPop, aes(x = Date_reported, y = NewDeathsPerCapita, color = "Cases")) +
   facet_wrap(~ Country_name) +
-  ggtitle("Figure 7: Daily Deaths Per Capita, in Countries with Universal Healthcare") +
+  ggtitle("Figure 7: Daily Deaths Per Capita in Countries with Universal Healthcare") +
   labs(x = "Month", y = "Daily Deaths Per Capita") +
   scale_y_log10() +
   theme(legend.position = "none")
 ```
 
 ```{r, echo = FALSE}
-# Average new deaths per capita in Countries with Universal Healthcare. Compliments above plot.
-knitr::kable(UniversalByPop %>%
-              rename("Country" = "Country_name") %>%
-            summarize(Mean = mean(DeathsPerCapita),
-                      Median = median(DeathsPerCapita),
-			 			  StdDev = sd(DeathsPerCapita), .groups = 'drop'),
-			 align = c('l','c','c','c','c'), 
-			 digits = 10,
-			 format = "html", 
-			 caption = "**Table 6**: Summary of Most Recent New Deaths per Capita in Countries with Universal Healthcare",
-			 table.attr = "style='width:70%;'") %>% kable_styling(position = "center")
+# Joins logical healthcare type data with the rest of the data analyzed in above plot
+UniversalFinal <- right_join(NewPopAndHealth, UniversalByPop, by = "Country_name")
+
+# ANOVA table of new deaths per capita compared to healthcare type. Compliments Figure 7.
+knitr::kable(anova(lm(NewDeathsPerCapita ~ UHC, data = UniversalFinal)),
+             digits = 15,
+             align = c('l','c','c','c','c'),
+			 format = "html",
+			 caption = "**Table 6**: ANOVA of New Deaths per Capita in Countries with Universal Healthcare",
+			 table.attr = "style='width:70%;'") %>% 
+  kable_styling(position = "center")
 ```
 
-This report's purpose is not to analyze case numbers, but these graphs allow us to see which countries have been able to keep their deaths from increasing as quickly as their cases, and the tables allow us to compare how well each healthcare system performs in the case to death ratio, per capita.
+Bhutan is the real superstar of this report, with zero deaths. Italy, the United Kingdom, Spain, Ireland, and Canada appear to be doing a great job of drastically decreasing their daily deaths per capita, as clear trends are visible. The same can not be said of Brazil and South Africa, whose daily cases are still on the rise.
 
-Notably, Burundi, Bhutan, Botswana, and Sri Lanka have been able to virtually halt their deaths even though their cases continue to climb. The same cannot be said of Italy, where there appears to be a short time period where their deaths came horrifyingly close to their number of cases, or Brazil, where cases have increased almost exponentially.
+The countries with universal healthcare have a sum of squares 3000 times larger than those with universal healthcare, indicating more variability in the number of new cases every day. Some countries with universal healthcare may be handling the virus well, but their efforts are offset globally by those who are not.
 
-## Description of analyses
+## Results and discussion
 
-It's certainly possible that it's more complicated, expensive, and difficult to implement universal healthcare in countries with large populations. This would explain the results of figure 4 and table 3, through which we found that one-quarter of the countries without universal healthcare (n = 4) accounted for over 50% of the total population in all 41 countries that we looked at. That, however, is not to say that private insurance is any less complicated, expensive, or difficult - the burden is simply shifted off the the country's government and redirected to its insurance companies and citizens.
+While countries with non-universal healthcare average more deaths than those with universal healthcare, this is due almost entirely to the pull from one country. Those with universal healthcare had a larger sum and median of total deaths - an expected outcome, as there are 29 countries with universal healthcare and only 12 with non-universal.
 
-Figure 5 and table 4 tell us that there are more deaths per capita in countries with universal healthcare than those with non-universal healthcare. This could be because universal healthcare makes for long wait times to be seen by doctors, and may cause doctors to cut corners due to monetary issues. Perhaps most importantly, it's well-documented that public, government-funded hospitals function less efficiently than private hospitals.
+Once population gets brought into consideration, the results are unexpected. Countries with non-universal healthcare had both larger total and larger average populations than those with universal healthcare, despite being comprised of far fewer counties. One-quarter of the countries with non-universal healthcare (n = 4) accounted for over 50% of the total population in all 41 countries that we looked at. It's certainly possible that it's more complicated, expensive, or difficult to implement universal healthcare in countries with large populations - private insurance shifts the burden off the the country's government.
 
-Notably, the United States of America contributes 97% of the total deaths in countries with non-universal healthcare, and 22% of the total global deaths despite comprising only 4% of the global population.
+Countries with universal healthcare had more deaths per capita despite having almost half as many total citizens. They averaged four times more deaths per capita than countries with non-universal healthcare, and totaled ten times more. This could be because universal healthcare makes for long wait times to be seen by doctors, and may cause doctors to cut corners due to monetary issues. There is also much debate as to whether public, government-funded hospitals function at the same standards and efficiency as private hospitals.
+
+The countries with universal healthcare also saw more variability in the number of new cases every day. While a few countries with universal healthcare are seeing a trending decrease in new cases, there are many more that are seeing an increase in cases.
 
 ## Conclusions
-The data does not support the hypothesis. While countries with non-universal healthcare average more deaths overall than countries with non-universal healthcare, that is due almost entirely to the data from one country - the United States. Countries with universal healthcare saw more deaths, both in total and per capita.
+The data does not support the hypothesis. While countries with non-universal healthcare average more deaths overall than countries with non-universal healthcare, that is due almost entirely to the data from one country - the United States. Countries with universal healthcare saw more deaths, both in total and per capita. More research will be needed to figure out why this is the case.
 
 ## Viewing this project
 The completed project files can be accessed online at https://MonicaPittiglio.github.io/COVID-19/. The repo for this reproducible project is also publicly available at https://github.com/MonicaPittiglio/COVID-19.
@@ -352,15 +355,3 @@ Moreno-Serra R, Smith P. Does progress towards universal health coverage improve
 
 
 WHO Coronavirus Disease (COVID-19) Dashboard. World Health Organization, 2020, covid19.who.int/.
-
-
-
-```{r, echo = FALSE, fig.cap = "Cumulative Deaths in Countries with Non-Universal Healthcare"}
-# ANOVA table to compliment Figure 2.
-knitr::kable(anova(lm(Cumulative_deaths ~ Country, data = NonUniversal)),digits = 3)
-```
-
-```{r anova, echo = FALSE, fig.cap = "Cumulative Deaths in Countries with Universal Healthcare"}
-# ANOVA table to compliment Figure 3.
-knitr::kable(anova(lm(Cumulative_deaths ~ Country, data = Universal)),digits = 3)
-```

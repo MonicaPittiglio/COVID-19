@@ -110,7 +110,7 @@ My main dataset is the World Health Organization's international dataset, which 
 
 First, we'll examine each healthcare type individually by viewing the cumulative deaths per country, grouped by healthcare type. Keep in mind that the Y axis of the following two graphs are on log scales, making the outliers appear less distinguished but the rest of the data more differentiable.
 
-```{r, fig.align = "center", fig.height = 9, echo = FALSE}
+```{r, fig.align = "center", fig.height = 9, echo = FALSE, message = FALSE, warning = FALSE}
 # Line graph of total deaths by country, non-universal healthcare.
 # I made this graph abnormally tall so that it wasn't too squished!!!
 ggplot(NonUniversal, aes(x = Date_reported, y = Cumulative_deaths, color = Country)) +
@@ -139,7 +139,7 @@ knitr::kable(LastDayNonUniversal %>% summarize(N = n(),
 
 The total number of deaths as of August 2nd in countries with non-universal healthcare is 157,786. The United States of America leads the pack with a cumulative 152,630 deaths. This is followed by Bangladesh, which has a cumulative 3,154 deaths, and Nigeria, which has a cumulative 883 deaths. These top three countries account for 99% of the deaths in countries that have non-universal healthcare. The United States of America alone comprises 97% of the total.
 
-```{r, fig.align = "center", fig.height = 12, echo = FALSE}
+```{r, fig.align = "center", fig.height = 12, echo = FALSE, message = FALSE, warning = FALSE}
 # Line graph of total deaths by country, universal healthcare.
 # I made this graph abnormally tall so that it wasn't too squished!!!
 ggplot(Universal, aes(x = Date_reported, y = Cumulative_deaths, color = Country)) +
@@ -272,7 +272,7 @@ The graph looks like it has completely flipped. While countries with universal h
 
 For a more in-depth look at what's going on in each country, we can view individual graphs of daily deaths per capita in each country. Keep in mind that the y-axis are on log 10 scales for viewing ease.
 
-```{r, fig.align = "center", fig.width = 10, fig.height = 7, echo = FALSE}
+```{r, fig.align = "center", fig.width = 10, fig.height = 7, echo = FALSE, message = FALSE, warning = FALSE}
 # Individual graphs for every country with non-universal healthcare, of both cases and deaths per capita.
 # I want to stress that I spent roughly 10 hours trying to figure out how to add regression lines to facited plots, and while it is technically possible, it requires a significant formatting change because you have to add it to each graph individually. The resulting graphs look horrible when there are this many plots. So I did not add correlation constants, please forgive me.
 ggplot() +
@@ -292,7 +292,7 @@ knitr::kable(NonUniversalByPop %>%
               Median = median(DeathsPerCapita),
 			 			  StdDev = sd(DeathsPerCapita), .groups = 'drop'),
 			 align = c('l','c','c','c','c'), 
-			 digits = 5,
+			 digits = 10,
 			 format = "html", 
 			 caption = "**Table 5**: Summary of Most Recent New Deaths per Capita in Countries with Non-Universal Healthcare",
 			 table.attr = "style='width:70%;'") %>% kable_styling(position = "center")
@@ -300,7 +300,7 @@ knitr::kable(NonUniversalByPop %>%
 
 On the most recent day analyzed
 
-```{r, fig.align = "center", fig.width = 10, fig.height = 7, echo = FALSE}
+```{r, fig.align = "center", fig.width = 10, fig.height = 7, echo = FALSE, message = FALSE, warning = FALSE}
 # Individual graphs for every country with universal healthcare, of both cases and deaths per capita.
 ggplot() +
   geom_line(data = UniversalByPop, aes(x = Date_reported, y = NewDeathsPerCapita, color = "Cases")) +
@@ -319,9 +319,9 @@ knitr::kable(UniversalByPop %>%
                       Median = median(DeathsPerCapita),
 			 			  StdDev = sd(DeathsPerCapita), .groups = 'drop'),
 			 align = c('l','c','c','c','c'), 
-			 digits = 5,
+			 digits = 10,
 			 format = "html", 
-			 caption = "**Table 5**: Summary of Most Recent New Deaths per Capita in Countries with Universal Healthcare",
+			 caption = "**Table 6**: Summary of Most Recent New Deaths per Capita in Countries with Universal Healthcare",
 			 table.attr = "style='width:70%;'") %>% kable_styling(position = "center")
 ```
 
